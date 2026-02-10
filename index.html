@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Timestamp</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/3.0.3/jspdf.umd.min.js" integrity="sha512-+EeCylkt9WHJk5tGJxYdecHOcXFRME7qnbsfeMsdQL6NUPYm2+uGFmyleEqsmVoap/f3dN/sc3BX9t9kHXkHHg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cjrtnc.leaningtech.com/4.2/loader.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 30px;
+            max-width: 600px;
+            width: 100%;
+            z-index: 0;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 24px;
+        }
+
+        #video {
+            width: 100%;
+            border-radius: 10px;
+            background: #000;
+            display: block;
+            margin-bottom: 20px;
+        }
+
+        #canvas {
+            display: none;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            flex: 1;
+            min-width: 120px;
+            padding: 15px 25px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+        }
+
+        #snapButton {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        #snapButton:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 14px;
+            display: none;
+        }
+
+        .status.info {
+            background: #e3f2fd;
+            color: #1976d2;
+            display: block;
+        }
+
+        .status.success {
+            background: #e8f5e9;
+            color: #388e3c;
+            display: block;
+        }
+
+        .status.error {
+            background: #ffebee;
+            color: #c62828;
+            display: block;
+        }
+
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .preview-image {
+            width: 100%;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .footer {
+            background: white;
+            border-radius: 5px;
+            position: fixed;
+            z-index: -1;
+            bottom: 0;
+            right: 0;
+            padding: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📸 Photo Timestamp</h1>
+
+        <video id="video" autoplay playsinline></video>
+        <canvas id="canvas"></canvas>
+        <img id="preview" class="preview-image" alt="Captured photo">
+
+        <div class="button-group">
+            <button id="snapButton">📷 Capture Photo</button>
+        </div>
+
+        <div class="loader" id="loader"></div>
+        <div class="status" id="status"></div>
+    </div>
+
+    <div class="footer">
+        Powered by: <a href="https://github.com/parallax/jsPDF" target="_blank">jsPDF</a>, <a href="https://cheerpj.com/" target="_blank">CheerpJ</a>, <a href="https://github.com/akr/pdftimestamp" target="_blank">pdftimestamp</a>
+    </div>
+    <script>
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+const snapButton = document.getElementById('snapButton');
+const status = document.getElementById('status');
+const loader = document.getElementById('loader');
+const preview = document.getElementById('preview');
+const ctx = canvas.getContext('2d');
+
+// Initialize camera
+async function initCamera() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment' },
+            audio: false
+        });
+        video.srcObject = stream;
+    } catch (err) {
+        showStatus('Error accessing camera: ' + err.message, 'error');
+        console.error('Camera error:', err);
+    }
+}
+
+// Show status message
+function showStatus(message, type) {
+    status.textContent = message;
+    status.className = 'status ' + type;
+}
+
+// Capture photo and process
+snapButton.addEventListener('click', async () => {
+    try {
+        snapButton.disabled = true;
+
+        // Capture image
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0);
+
+        // Show preview
+        const imageDataUrl = canvas.toDataURL('image/jpeg', 0.95);
+        preview.src = imageDataUrl;
+        preview.style.display = 'block';
+
+        showStatus('Photo captured! Creating PDF...', 'info');
+        loader.style.display = 'block';
+
+        // Convert to PDF
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({
+            orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
+            unit: 'px',
+            format: [canvas.width, canvas.height]
+        });
+
+        pdf.addImage(imageDataUrl, 'JPEG', 0, 0, canvas.width, canvas.height);
+        const timestamp = new Date().toISOString();
+        pdf.setProperties({
+            title: 'Timestamped Photo',
+            subject: 'Photo captured and timestamped',
+            author: 'Camera to PDF App',
+            keywords: 'timestamp, photo, pdf',
+            creator: 'Camera to PDF App',
+            creationDate: timestamp
+        });
+
+        // Add visible timestamp on the PDF
+        pdf.setFontSize(10);
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFillColor(0, 0, 0, 0.7);
+        const text = `Timestamp: ${timestamp}`;
+        const textWidth = pdf.getTextWidth(text);
+        pdf.rect(10, canvas.height - 25, textWidth + 10, 20, 'F');
+        pdf.text(text, 15, canvas.height - 12);
+        const pdfBlob = pdf.output('blob');
+
+        showStatus('PDF created! Adding timestamp signature...', 'info');
+
+        // Timestamp the PDF
+        await timestampPDF(pdfBlob);
+
+    } catch (err) {
+        showStatus('Error: ' + err.message, 'error');
+        console.error('Processing error:', err);
+    } finally {
+        snapButton.disabled = false;
+        preview.style.display = 'none';
+        loader.style.display = 'none';
+    }
+});
+
+// Timestamp PDF using SSL.com's free timestamp service
+async function timestampPDF(pdfBlob) {
+    try {
+        // Convert PDF to ArrayBuffer
+        const pdfArrayBuffer = await pdfBlob.arrayBuffer();
+        const pdfBytes = new Uint8Array(pdfArrayBuffer);
+
+        await cheerpOSAddStringFile("/str/input.pdf", pdfBytes);
+        await cheerpjRunJar("/app" + (new URL('./', location.href)).pathname + "pdftimestamp-all.jar", "-t", "https://ts-ssl-com-proxy.330k.workers.dev", "/str/input.pdf", "/files/output.pdf");
+
+        const blob = await cjFileBlob("/files/output.pdf");
+        downloadFile(blob, 'timestamped-photo-' + Date.now() + '.pdf');
+        showStatus('✅ PDF timestamped and downloaded successfully!', 'success');
+    } catch (err) {
+        throw new Error('Timestamp failed: ' + err.message);
+    }
+}
+
+// Download file
+function downloadFile(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+// Initialize on load
+Promise.all([initCamera(), cheerpjInit({ version: 17 })]).then(() => {
+    showStatus('Camera ready! Click "Capture Photo" to take a picture.', 'info');
+});
+    </script>
+</body>
+</html>
