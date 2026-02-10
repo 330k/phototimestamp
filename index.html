@@ -287,7 +287,13 @@ function downloadFile(blob, filename) {
 }
 
 // Initialize on load
-Promise.all([initCamera(), cheerpjInit({ version: 17 })]).then(() => {
+Promise.all([
+    initCamera(),
+    cheerpjInit({
+        version: 17,
+        preloadResources: {"/lt/17/lib/modules":[0,131072,1179648,2097152,2228224,4718592,4849664,5373952,5505024,5898240,6029312,6291456,6422528,6553600,6684672,7077888,7733248,8388608,9437184,9699328,9830400,10092544,19005440,19136512,19791872,19922944,21364736,21626880,21757952,22020096,25165824,25296896,26083328,26345472,26738688,27000832,37486592,37617664,38010880,38141952],"/lt/etc/users":[0,131072],"/lt/etc/localtime":[],"/lt/17/jre/lib/cheerpj-handlers.jar":[0,131072],"/lt/17/jre/lib/cheerpj-awt.jar":[0,131072],"/lt/17/jre/lib/cheerpj-jsobject.jar":[0,131072],"/lt/17/conf/security/java.security":[0,131072],"/lt/17/conf/logging.properties":[0,131072],"/lt/17/conf/accessibility.properties":[],"/lt/etc/timezone":[],"/lt/17/lib/tzdb.dat":[0,131072]}
+    })
+]).then(() => {
     showStatus('Camera ready! Click "Capture Photo" to take a picture.', 'info');
 });
     </script>
