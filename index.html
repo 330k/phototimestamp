@@ -207,6 +207,7 @@ snapButton.addEventListener('click', async () => {
         // Show preview
         const imageDataUrl = canvas.toDataURL('image/jpeg', 0.95);
         preview.src = imageDataUrl;
+        video.style.display = 'none';
         preview.style.display = 'block';
 
         showStatus('Photo captured! Creating PDF...', 'info');
@@ -251,6 +252,7 @@ snapButton.addEventListener('click', async () => {
         console.error('Processing error:', err);
     } finally {
         snapButton.disabled = false;
+        video.style.display = 'block';
         preview.style.display = 'none';
         loader.style.display = 'none';
     }
