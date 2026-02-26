@@ -178,7 +178,11 @@ const ctx = canvas.getContext('2d');
 async function initCamera() {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'environment' },
+            video: {
+                facingMode: 'environment',
+                width: { ideal: 4032 },
+                height: { ideal: 3024 }
+            },
             audio: false
         });
         video.srcObject = stream;
