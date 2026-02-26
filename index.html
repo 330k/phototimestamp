@@ -202,11 +202,20 @@ function showStatus(message, type) {
 snapButton.addEventListener('click', async () => {
     try {
         snapButton.disabled = true;
+        const now = new Date();
 
         // Capture image
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         ctx.drawImage(video, 0, 0);
+
+        // Add Timestamp
+        //ctx.fillStyle = "rgb(0 0 0 / 80%)";
+        ctx.fillStyle = "rgb(255 165 0 / 80%)";
+        ctx.font = "bold 24px monospace";
+        ctx.textBaseline = "top";
+        ctx.textAlign = "right";
+        ctx.fillText(now.toISOString(), canvas.width, 0);
 
         // Show preview
         const imageDataUrl = canvas.toDataURL('image/jpeg', 0.95);
@@ -226,7 +235,7 @@ snapButton.addEventListener('click', async () => {
         });
 
         pdf.addImage(imageDataUrl, 'JPEG', 0, 0, canvas.width, canvas.height);
-        const timestamp = new Date().toISOString();
+        const timestamp = now.toISOString();
         pdf.setProperties({
             title: 'Timestamped Photo',
             subject: 'Photo captured and timestamped',
@@ -240,7 +249,7 @@ snapButton.addEventListener('click', async () => {
         pdf.setFontSize(10);
         pdf.setTextColor(255, 255, 255);
         pdf.setFillColor(0, 0, 0, 0.7);
-        const text = `Timestamp: ${timestamp}`;
+        const text = `Timestamp: ${now.toISOString()}`;
         const textWidth = pdf.getTextWidth(text);
         pdf.rect(10, canvas.height - 25, textWidth + 10, 20, 'F');
         pdf.text(text, 15, canvas.height - 12);
