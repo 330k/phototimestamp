@@ -279,7 +279,7 @@ async function timestampPDF(pdfBlob) {
         const pdfBytes = new Uint8Array(pdfArrayBuffer);
 
         await cheerpOSAddStringFile("/str/input.pdf", pdfBytes);
-        await cheerpjRunJar("/app" + (new URL('./', location.href)).pathname + "pdftimestamp-all.jar", "-t", "https://ts-ssl-com-proxy.330k.workers.dev", "/str/input.pdf", "/files/output.pdf");
+        await cheerpjRunJar("/app" + (new URL('./', location.href)).pathname + "pdftimestamp-all.jar", "http://ts.ssl.com", "/str/input.pdf", "/files/output.pdf");
 
         const blob = await cjFileBlob("/files/output.pdf");
         downloadFile(blob, 'timestamped-photo-' + Date.now() + '.pdf');
