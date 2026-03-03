@@ -1,8 +1,8 @@
-# phototimestamp
+# Timestamped Photo
 
 https://330k.github.io/phototimestamp/
 
-An experimental program that launches the camera in the browser and adds a timestamp signature to the PDF.
+An experimental program that launches the camera in the browser and adds an LTV enabled timestamp signature to the PDF.
 
 While AI is reducing the evidential value of photos, the concept is to create evidential photos by generating timestamp-signed PDFs directly within the browser.
 
