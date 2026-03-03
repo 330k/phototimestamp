@@ -40,7 +40,13 @@
             font-size: 24px;
         }
 
+        .image-group {
+            position: relative;
+        }
+
         #video {
+            position: relative;
+            z-index: 10;
             width: 100%;
             border-radius: 10px;
             background: #000;
@@ -49,7 +55,39 @@
         }
 
         #canvas {
+            position: absolute;
+            z-index: 20;
+            top: 0;
             display: none;
+        }
+
+        .preview-image {
+            position: absolute;
+            z-index: 30;
+            top: 0;
+            width: 100%;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .loader {
+            position: absolute;
+            z-index: 40;
+            top: 50%;
+            left: 50%;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
         }
 
         .button-group {
@@ -112,29 +150,6 @@
             display: block;
         }
 
-        .loader {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-            display: none;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .preview-image {
-            width: 100%;
-            border-radius: 10px;
-            margin-top: 20px;
-            display: none;
-        }
-
         .footer {
             background: white;
             border-radius: 5px;
@@ -150,10 +165,12 @@
     <div class="container">
         <h1>📸 Timestamped Photo</h1>
 
-        <video id="video" autoplay playsinline></video>
-        <canvas id="canvas"></canvas>
-        <img id="preview" class="preview-image" alt="Captured photo">
-        <div class="loader" id="loader"></div>
+        <div class="image-group">
+            <video id="video" autoplay playsinline></video>
+            <canvas id="canvas"></canvas>
+            <img id="preview" class="preview-image" alt="Captured photo">
+            <div class="loader" id="loader"></div>
+        </div>
 
         <div class="button-group">
             <button id="snapButton">📷 Capture Photo</button>
@@ -220,7 +237,7 @@ snapButton.addEventListener('click', async () => {
         // Show preview
         const imageDataUrl = canvas.toDataURL('image/jpeg', 0.95);
         preview.src = imageDataUrl;
-        video.style.display = 'none';
+        //video.style.display = 'none';
         preview.style.display = 'block';
 
         showStatus('Photo captured! Creating PDF...', 'info');
@@ -265,7 +282,7 @@ snapButton.addEventListener('click', async () => {
         console.error('Processing error:', err);
     } finally {
         snapButton.disabled = false;
-        video.style.display = 'block';
+        //video.style.display = 'block';
         preview.style.display = 'none';
         loader.style.display = 'none';
     }
