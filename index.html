@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Photo Timestamp</title>
+    <title>Timestamped Photo</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/3.0.3/jspdf.umd.min.js" integrity="sha512-+EeCylkt9WHJk5tGJxYdecHOcXFRME7qnbsfeMsdQL6NUPYm2+uGFmyleEqsmVoap/f3dN/sc3BX9t9kHXkHHg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="https://cjrtnc.leaningtech.com/4.2/loader.js"></script>
     <style>
@@ -148,17 +148,17 @@
 </head>
 <body>
     <div class="container">
-        <h1>📸 Photo Timestamp</h1>
+        <h1>📸 Timestamped Photo</h1>
 
         <video id="video" autoplay playsinline></video>
         <canvas id="canvas"></canvas>
         <img id="preview" class="preview-image" alt="Captured photo">
+        <div class="loader" id="loader"></div>
 
         <div class="button-group">
             <button id="snapButton">📷 Capture Photo</button>
         </div>
 
-        <div class="loader" id="loader"></div>
         <div class="status" id="status"></div>
     </div>
 
@@ -238,10 +238,10 @@ snapButton.addEventListener('click', async () => {
         const timestamp = now.toISOString();
         pdf.setProperties({
             title: 'Timestamped Photo',
-            subject: 'Photo captured and timestamped',
-            author: 'Camera to PDF App',
+            subject: 'Taken: ' + now.toISOString(),
+            author: 'UserAgent: ' + navigator.userAgent,
             keywords: 'timestamp, photo, pdf',
-            creator: 'Camera to PDF App',
+            creator: 'Timestamped Photo ' + location.href + ' by 330k',
             creationDate: timestamp
         });
 
