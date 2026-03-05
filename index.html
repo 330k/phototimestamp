@@ -1,197 +1,216 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Timestamped Photo</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/3.0.3/jspdf.umd.min.js" integrity="sha512-+EeCylkt9WHJk5tGJxYdecHOcXFRME7qnbsfeMsdQL6NUPYm2+uGFmyleEqsmVoap/f3dN/sc3BX9t9kHXkHHg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="https://cjrtnc.leaningtech.com/4.2/loader.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Timestamped Photo</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/3.0.3/jspdf.umd.min.js" integrity="sha512-+EeCylkt9WHJk5tGJxYdecHOcXFRME7qnbsfeMsdQL6NUPYm2+uGFmyleEqsmVoap/f3dN/sc3BX9t9kHXkHHg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cjrtnc.leaningtech.com/4.2/loader.js"></script>
+  <style>
+    /* 1. 全体のリセット */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
+    body {
+      /*background-color: #000;*/
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      overflow: hidden; /* スクロールを禁止 */
+      font-family: sans-serif;
+      padding: 15px;
+    }
 
-        .container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            padding: 30px;
-            max-width: 600px;
-            min-width: 400px;
-            width: 100%;
-            z-index: 2;
-        }
+    /* 2. アプリ全体のコンテナ */
+    .app-container {
+      position: relative;
+      width: 100%;
+      height: calc(100dvh - 30px); /* 動的ビューポート高さを使用 */
+      background: white;
+      border-radius: 20px;
+    }
 
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 30px;
-            font-size: 24px;
-        }
+    .app-header {
+      text-align: center;
+      height: 50px;
+    }
+    .app-header h1 {
+      font-size: clamp(25px, 5vw , 32px);
+    }
+    /* 3. カメラプレビュー領域 */
+    .camera-view {
+      position: absolute;
+      top: 50px;
+      left: 0;
+      width: 100%;
+      height: calc(100% - 170px);
+      object-fit: contain;
+      z-index: 1;
+    }
+    .camera-view video {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      z-index: 1;
+    }
+    .camera-view canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      z-index: 2;
+      display: none;
+    }
+    .camera-view img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      z-index: 3;
+      display: none;
+    }
 
-        .image-group {
-            position: relative;
-        }
+    /* 4. UIオーバーレイ（操作ボタンなど） */
+    .controls {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 120px; /* 操作エリアの高さ */
+      display: flex;
+      justify-content: center;
+      align-items: end;
+      z-index: 10;
+      /*background: linear-gradient(transparent, rgba(0,0,0,0.5)); /* 下部を見やすく */
+      padding-bottom: env(safe-area-inset-bottom); /* iPhoneのホームバー対策 */
+    }
 
-        #video {
-            position: relative;
-            z-index: 10;
-            width: 100%;
-            border-radius: 10px;
-            background: #000;
-            display: block;
-            margin-bottom: 20px;
-        }
+    .status {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 20px);
+      max-height: 50px;
+      overflow: hidden;
+      z-index: 4;
+      text-align: center;
+      padding: 5px;
+      border-radius: 10px;
+      text-align: center;
+      font-size: 14px;
+      display: none;
+    }
 
-        #canvas {
-            position: absolute;
-            z-index: 20;
-            top: 0;
-            display: none;
-        }
+    .status.info {
+      background: #e3f2fd;
+      color: #1976d2;
+      display: block;
+    }
 
-        .preview-image {
-            position: absolute;
-            z-index: 30;
-            top: 0;
-            width: 100%;
-            border-radius: 10px;
-            display: none;
-        }
+    .status.success {
+      background: #e8f5e9;
+      color: #388e3c;
+      display: block;
+    }
 
-        .loader {
-            position: absolute;
-            z-index: 40;
-            top: 50%;
-            left: 50%;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-            display: none;
-        }
+    .status.error {
+      background: #ffebee;
+      color: #c62828;
+      display: block;
+    }
 
-        @keyframes spin {
-            0% { transform: translate(-50%, -50%) rotate(0deg); }
-            100% { transform: translate(-50%, -50%) rotate(360deg); }
-        }
+    /* 5. シャッターボタン */
+    .shutter-button {
+      min-width: 120px;
+      padding: 15px 25px;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: white;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      margin-bottom: 16px;
+    }
+    /*.shutter-button:active {
+      transform: scale(0.9);
+      background-color: #ccc;
+    }*/
+    .shutter-button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
 
-        .button-group {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
 
-        button {
-            flex: 1;
-            min-width: 120px;
-            padding: 15px 25px;
-            font-size: 16px;
-            font-weight: 600;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            color: white;
-        }
+    .footer {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      padding-right: 15px;
+      overflow: hidden;
+      font-size: clamp(8px, 2vw, 16px);
+    }
 
-        #snapButton {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
+    .loader {
+      position: absolute;
+      z-index: 40;
+      top: 50%;
+      left: 50%;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #667eea;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+      display: none;
+    }
 
-        #snapButton:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .status {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            font-size: 14px;
-            display: none;
-        }
-
-        .status.info {
-            background: #e3f2fd;
-            color: #1976d2;
-            display: block;
-        }
-
-        .status.success {
-            background: #e8f5e9;
-            color: #388e3c;
-            display: block;
-        }
-
-        .status.error {
-            background: #ffebee;
-            color: #c62828;
-            display: block;
-        }
-
-        .footer {
-            background: white;
-            border-radius: 5px;
-            position: fixed;
-            z-index: 1;
-            bottom: 0;
-            right: 0;
-            padding: 5px;
-        }
-    </style>
-    <meta property="og:title" content="Timestamped Photo">
-    <meta property="og:description" content="An experimental program that launches the camera in the browser and adds an LTV enabled timestamp signature to the PDF">
-    <meta property="og:image" content="https://330k.github.io/phototimestamp/image001.jpg">
-    <meta property="og:url" content="https://330k.github.io/phototimestamp/">
-    <meta property="og:type" content="website" />
+    @keyframes spin {
+      0% { transform: translate(-50%, -50%) rotate(0deg); }
+      100% { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>📸 Timestamped Photo</h1>
 
-        <div class="image-group">
-            <video id="video" autoplay playsinline></video>
-            <canvas id="canvas"></canvas>
-            <img id="preview" class="preview-image" alt="Captured photo">
-            <div class="loader" id="loader"></div>
-        </div>
-
-        <div class="button-group">
-            <button id="snapButton">📷 Capture Photo</button>
-        </div>
-
-        <div class="status" id="status"></div>
+  <div class="app-container">
+    <div class="app-header">
+      <h1>📸 Timestamped Photo</h1>
     </div>
-
-    <div class="footer">
+    <div class="camera-view">
+      <video id="video" autoplay playsinline></video>
+      <canvas id="canvas"></canvas>
+      <img id="preview" class="preview-image" alt="Captured photo">
+      <div class="loader" id="loader"></div>
+    </div>
+    <div class="controls">
+      <div class="status" id="status"></div>
+      <button class="shutter-button" id="shutter">📷 Capture Photo</button>
+      <div class="footer">
         <a href="https://github.com/330k/phototimestamp">GitHub</a>, Powered by: <a href="https://github.com/parallax/jsPDF" target="_blank">jsPDF</a>, <a href="https://cheerpj.com/" target="_blank">CheerpJ</a>, <a href="https://github.com/akr/pdftimestamp" target="_blank">pdftimestamp</a>
+      </div>
     </div>
-    <script>
+  </div>
+
+  <script>
 const video = document.getElementById('video');
 const canvas = document.getElementById('canvas');
-const snapButton = document.getElementById('snapButton');
+const shutter = document.getElementById('shutter');
 const status = document.getElementById('status');
 const loader = document.getElementById('loader');
 const preview = document.getElementById('preview');
@@ -210,10 +229,19 @@ async function initCamera() {
         });
         video.srcObject = stream;
     } catch (err) {
-        showStatus('Error accessing camera: ' + err.message, 'error');
+        //showStatus('Error accessing camera: ' + err.message, 'error');
         console.error('Camera error:', err);
     }
 }
+Promise.all([
+    initCamera(),
+    cheerpjInit({
+        version: 17,
+        preloadResources: {"/lt/17/lib/modules":[0,131072,1179648,2097152,2228224,4718592,4849664,5373952,5505024,5898240,6029312,6291456,6422528,6553600,6684672,7077888,7733248,8388608,9437184,9699328,9830400,10092544,19005440,19136512,19791872,19922944,21364736,21626880,21757952,22020096,25165824,25296896,26083328,26345472,26738688,27000832,37486592,37617664,38010880,38141952],"/lt/etc/users":[0,131072],"/lt/etc/localtime":[],"/lt/17/jre/lib/cheerpj-handlers.jar":[0,131072],"/lt/17/jre/lib/cheerpj-awt.jar":[0,131072],"/lt/17/jre/lib/cheerpj-jsobject.jar":[0,131072],"/lt/17/conf/security/java.security":[0,131072],"/lt/17/conf/logging.properties":[0,131072],"/lt/17/conf/accessibility.properties":[],"/lt/etc/timezone":[],"/lt/17/lib/tzdb.dat":[0,131072]}
+    })
+]).then(() => {
+    showStatus('Camera ready! Click "Capture Photo" to take a picture.', 'info');
+});
 
 // Show status message
 function showStatus(message, type) {
@@ -222,9 +250,9 @@ function showStatus(message, type) {
 }
 
 // Capture photo and process
-snapButton.addEventListener('click', async () => {
+shutter.addEventListener('click', async () => {
     try {
-        snapButton.disabled = true;
+        shutter.disabled = true;
         const now = new Date();
 
         // Capture image
@@ -278,19 +306,21 @@ snapButton.addEventListener('click', async () => {
         pdf.text(text, 15, canvas.height - 12);
         const pdfBlob = pdf.output('blob');
 
-        showStatus('PDF created! Adding timestamp signature...', 'info');
+        showStatus('Photo created! Adding timestamp signature...', 'info');
 
         // Timestamp the PDF
         await timestampPDF(pdfBlob);
+        //await (new Promise((resolve, reject) => { setTimeout(resolve, 3000); })); // for Layout
 
     } catch (err) {
         showStatus('Error: ' + err.message, 'error');
         console.error('Processing error:', err);
     } finally {
-        snapButton.disabled = false;
+        shutter.disabled = false;
         //video.style.display = 'block';
         preview.style.display = 'none';
         loader.style.display = 'none';
+        showStatus('Timestamped PDF created!', 'info');
     }
 });
 
@@ -323,17 +353,7 @@ function downloadFile(blob, filename) {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 }
+</script>
 
-// Initialize on load
-Promise.all([
-    initCamera(),
-    cheerpjInit({
-        version: 17,
-        preloadResources: {"/lt/17/lib/modules":[0,131072,1179648,2097152,2228224,4718592,4849664,5373952,5505024,5898240,6029312,6291456,6422528,6553600,6684672,7077888,7733248,8388608,9437184,9699328,9830400,10092544,19005440,19136512,19791872,19922944,21364736,21626880,21757952,22020096,25165824,25296896,26083328,26345472,26738688,27000832,37486592,37617664,38010880,38141952],"/lt/etc/users":[0,131072],"/lt/etc/localtime":[],"/lt/17/jre/lib/cheerpj-handlers.jar":[0,131072],"/lt/17/jre/lib/cheerpj-awt.jar":[0,131072],"/lt/17/jre/lib/cheerpj-jsobject.jar":[0,131072],"/lt/17/conf/security/java.security":[0,131072],"/lt/17/conf/logging.properties":[0,131072],"/lt/17/conf/accessibility.properties":[],"/lt/etc/timezone":[],"/lt/17/lib/tzdb.dat":[0,131072]}
-    })
-]).then(() => {
-    showStatus('Camera ready! Click "Capture Photo" to take a picture.', 'info');
-});
-    </script>
 </body>
 </html>
