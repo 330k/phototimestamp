@@ -304,7 +304,7 @@ async function timestampPDF(pdfBlob) {
         await cheerpOSAddStringFile("/str/input.pdf", pdfBytes);
         await cheerpjRunJar("/app" + (new URL('./', location.href)).pathname + "pdftimestamp-all.jar", "http://ts.ssl.com", "/str/input.pdf", "/files/output.pdf");
 
-        const blob = await cjFileBlob("/files/output.pdf");
+        const blob = new Blob([await cjFileBlob("/files/output.pdf")], { type: "application/octet-stream" });
         downloadFile(blob, 'timestamped-photo-' + Date.now() + '.pdf');
         showStatus('✅ PDF timestamped and downloaded successfully!', 'success');
     } catch (err) {
