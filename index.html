@@ -241,6 +241,7 @@ Promise.all([
     initCamera(),
     cheerpjInit({
         version: 17,
+        javaProperties: ['pdftimestamp.urlprefix=https%3A%2F%2Fgeneric-proxy.330k.workers.dev%2F%3Fx-url%3D'],
         preloadResources: {"/lt/17/lib/tzdb.dat":[0,131072],"/lt/17/conf/logging.properties":[0,131072],"/lt/17/conf/security/java.security":[0,131072],"/lt/17/jre/lib/cheerpj-jsobject.jar":[0,131072],"/lt/17/jre/lib/cheerpj-awt.jar":[0,131072],"/lt/17/jre/lib/cheerpj-handlers.jar":[0,131072],"/lt/etc/users":[0,131072],"/lt/17/lib/modules":[0,131072,1179648,5373952,5505024,6291456,6422528,6553600,6684672,7077888,7733248,8519680,9175040,9306112,9437184,10092544,10354688,10485760,19005440,19136512,19791872,19922944,21364736,21626880,21757952,22020096,25165824,25296896,26083328,26476544,26738688,27000832,27787264,27918336,28704768,28835840,29622272,29753344,30015488,30146560,30670848,30801920,35520512,35913728,37486592,37617664,37748736,37879808,38010880,38141952],"/lt/etc/localtime":[],"/lt/17/conf/accessibility.properties":[],"/lt/etc/timezone":[]}
     })
 ]).then(() => {
@@ -335,10 +336,11 @@ async function timestampPDF(pdfBlob) {
         const pdfArrayBuffer = await pdfBlob.arrayBuffer();
         const pdfBytes = new Uint8Array(pdfArrayBuffer);
 
+        const outputfile = "/files/" + crypto.randomUUID() + ".pdf";
         await cheerpOSAddStringFile("/str/input.pdf", pdfBytes);
-        await cheerpjRunJar("/app" + (new URL('./', location.href)).pathname + "pdftimestamp-all.jar", "http://ts.ssl.com", "/str/input.pdf", "/files/output.pdf");
+        await cheerpjRunJar("/app" + (new URL('./', location.href)).pathname + "pdftimestamp-all.jar", "http://ts.ssl.com", "/str/input.pdf", outputfile);
 
-        const blob = new Blob([await cjFileBlob("/files/output.pdf")], { type: "application/octet-stream" });
+        const blob = new Blob([await cjFileBlob(outputfile)], { type: "application/octet-stream" });
         downloadFile(blob, 'timestamped-photo-' + Date.now() + '.pdf');
         showStatus('✅ PDF timestamped and downloaded successfully!', 'success');
     } catch (err) {
