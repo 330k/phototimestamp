@@ -233,7 +233,7 @@ async function initCamera() {
         });
         video.srcObject = stream;
     } catch (err) {
-        //showStatus('Error accessing camera: ' + err.message, 'error');
+        throw new Error('Error accessing camera: ' + err.message);
         console.error('Camera error:', err);
     }
 }
@@ -246,6 +246,8 @@ Promise.all([
     })
 ]).then(() => {
     showStatus('Camera ready! Click "Capture Photo" to take a picture.', 'info');
+}).catch((error) => {
+    showStatus(error.message, 'error');
 });
 
 // Show status message
