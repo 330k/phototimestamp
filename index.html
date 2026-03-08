@@ -242,6 +242,7 @@ async function initCamera() {
         console.error('Camera error:', err);
     }
 }
+shutter.disabled = true;
 Promise.all([
     initCamera(),
     cheerpjInit({
@@ -251,6 +252,7 @@ Promise.all([
     })
 ]).then(() => {
     showStatus('Camera ready! Click "Capture Photo" to take a picture.', 'info');
+    shutter.disabled = false;
 }).catch((error) => {
     showStatus(error.message, 'error');
 });
