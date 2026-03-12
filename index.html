@@ -100,6 +100,7 @@
       padding: 5px;
       border-radius: 10px;
       text-align: center;
+      color: #ccc;
       font-size: 14px;
       display: none;
       opacity: 0;
@@ -264,13 +265,6 @@ class TooltipManager {
         this.element.textContent = message;
         this.element.className = 'status ' + type;
 
-        // フェードイン（非表示状態から戻す）
-        this.element.style.display = 'block';
-        // ブラウザのレンダリングを待つために一瞬遅らせて不透明度を上げる
-        setTimeout(() => {
-            this.element.style.opacity = '1';
-        }, 10);
-
         // 3. 5秒後に消去するタイマーを設定
         if(duration){
             this.timer = setTimeout(() => {
@@ -283,14 +277,7 @@ class TooltipManager {
      * ツールチップをフェードアウトさせる
      */
     hide() {
-        this.element.style.opacity = '0';
-
-        // アニメーションが終わるのを待ってから要素を完全に消す（クリック判定等をなくすため）
-        setTimeout(() => {
-            if (this.element.style.opacity === '0') {
-                this.element.style.display = 'none';
-            }
-        }, 500); // CSSのtransition時間（0.5s）に合わせる
+        this.element.className = 'status';
     }
 }
 
@@ -370,7 +357,7 @@ shutter.addEventListener('click', async () => {
             title: 'Timestamped Photo',
             subject: 'Taken: ' + now.toISOString(),
             author: 'UserAgent: ' + navigator.userAgent,
-            keywords: 'timestamp, photo, pdf',
+            keywords: 'latestbitcoinblock: ' ,
             creator: 'Timestamped Photo ' + location.href + ' by 330k',
             creationDate: timestamp
         });
