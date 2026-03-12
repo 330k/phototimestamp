@@ -28,14 +28,14 @@
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       overflow: hidden; /* スクロールを禁止 */
       font-family: sans-serif;
-      padding: 15px;
+      padding: 12px;
     }
 
     /* 2. アプリ全体のコンテナ */
     .app-container {
       position: relative;
       width: 100%;
-      height: calc(100dvh - 30px); /* 動的ビューポート高さを使用 */
+      height: calc(100dvh - 24px); /* 動的ビューポート高さを使用 */
       background: white;
       border-radius: 20px;
     }
@@ -53,7 +53,7 @@
       top: 50px;
       left: 0;
       width: 100%;
-      height: calc(100% - 170px);
+      height: calc(100% - 120px);
       object-fit: contain;
       z-index: 1;
     }
@@ -87,24 +87,9 @@
       display: none;
     }
 
-    /* 4. UIオーバーレイ（操作ボタンなど） */
-    .controls {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 120px; /* 操作エリアの高さ */
-      display: flex;
-      justify-content: center;
-      align-items: end;
-      z-index: 10;
-      /*background: linear-gradient(transparent, rgba(0,0,0,0.5)); /* 下部を見やすく */
-      padding-bottom: env(safe-area-inset-bottom); /* iPhoneのホームバー対策 */
-    }
-
     .status {
       position: absolute;
-      top: 0;
+      bottom: 0;
       left: 50%;
       transform: translateX(-50%);
       width: calc(100% - 20px);
@@ -137,6 +122,20 @@
       display: block;
     }
 
+    /* 4. UIオーバーレイ（操作ボタンなど） */
+    .controls {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      display: flex;
+      width: 100%;
+      height: 70px; /* 操作エリアの高さ */
+      justify-content: center;
+      align-items: end;
+      z-index: 10;
+      padding-bottom: env(safe-area-inset-bottom); /* iPhoneのホームバー対策 */
+    }
+
     /* 5. シャッターボタン */
     .shutter-button {
       min-width: 120px;
@@ -149,7 +148,7 @@
       transition: all 0.3s ease;
       color: white;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      margin-bottom: 16px;
+      margin-bottom: 12px;
     }
     /*.shutter-button:active {
       transform: scale(0.9);
@@ -206,9 +205,9 @@
       <canvas id="canvas"></canvas>
       <img id="preview" class="preview-image" alt="Captured photo">
       <div class="loader" id="loader"></div>
+      <div class="status" id="status">Create PDF with LTV enabled timestamp signature</div>
     </div>
     <div class="controls">
-      <div class="status" id="status"></div>
       <button class="shutter-button" id="shutter">📷 Capture Photo</button>
       <div class="footer">
         <a href="https://github.com/330k/phototimestamp">GitHub</a>, Powered by: <a href="https://github.com/parallax/jsPDF" target="_blank">jsPDF</a>, <a href="https://cheerpj.com/" target="_blank">CheerpJ</a>, <a href="https://github.com/akr/pdftimestamp" target="_blank">pdftimestamp</a>
@@ -220,10 +219,65 @@
 const video = document.getElementById('video');
 const canvas = document.getElementById('canvas');
 const shutter = document.getElementById('shutter');
-const status = document.getElementById('status');
 const loader = document.getElementById('loader');
 const preview = document.getElementById('preview');
 const ctx = canvas.getContext('2d');
+
+/**
+ * ツールチップの表示・更新・自動消去を管理するクラス
+ */
+class TooltipManager {
+    constructor(elementId) {
+        this.element = document.getElementById(elementId);
+        this.timer = null;
+        this.displayDuration = 5000; // 5秒
+    }
+
+    /**
+     * テキストを更新してタイマーを開始する
+     * @param {string} message - メッセージ内容
+     * @param {string} type - クラス名
+     * @param {number|null} duration - 消えるまでの秒数(ms)または永続(null)
+     */
+    update(message, type, duration) {
+        // 1. 既存のタイマーがあればキャンセル（リセット）
+        if (this.timer) {
+            clearTimeout(this.timer);
+        }
+
+        // 2. 内容を書き換えて表示状態にする
+        this.element.textContent = message;
+        this.element.className = 'status ' + type;
+
+        // フェードイン（非表示状態から戻す）
+        this.element.style.display = 'block';
+        // ブラウザのレンダリングを待つために一瞬遅らせて不透明度を上げる
+        setTimeout(() => {
+            this.element.style.opacity = '1';
+        }, 10);
+
+        // 3. 5秒後に消去するタイマーを設定
+        if(duration){
+            this.timer = setTimeout(() => {
+                this.hide();
+            }, duration);
+        }
+    }
+
+    /**
+     * ツールチップをフェードアウトさせる
+     */
+    hide() {
+        this.element.style.opacity = '0';
+
+        // アニメーションが終わるのを待ってから要素を完全に消す（クリック判定等をなくすため）
+        setTimeout(() => {
+            if (this.element.style.opacity === '0') {
+                this.element.style.display = 'none';
+            }
+        }, 500); // CSSのtransition時間（0.5s）に合わせる
+    }
+}
 
 // Initialize camera
 async function initCamera() {
@@ -242,6 +296,8 @@ async function initCamera() {
         console.error('Camera error:', err);
     }
 }
+
+const status = new TooltipManager('status');
 shutter.disabled = true;
 Promise.all([
     initCamera(),
@@ -251,17 +307,11 @@ Promise.all([
         /*preloadResources: {"/lt/17/lib/modules":[0,131072,1179648,5373952,5505024,6291456,6422528,6553600,6684672,7208960,7733248,8519680,9175040,9306112,9437184,10092544,10354688,10485760,19005440,19136512,19791872,19922944,21364736,21626880,21757952,22020096,25165824,25296896,26083328,26476544,26738688,27000832,27787264,27918336,28704768,28835840,29622272,29753344,30015488,30146560,30670848,30801920,35520512,35913728,37486592,37617664,37748736,37879808,38010880,38141952],"/lt/etc/users":[0,131072],"/lt/17/jre/lib/cheerpj-handlers.jar":[0,131072],"/lt/17/jre/lib/cheerpj-awt.jar":[0,131072],"/lt/17/jre/lib/cheerpj-jsobject.jar":[0,131072],"/lt/17/conf/security/java.security":[0,131072],"/lt/17/conf/logging.properties":[0,131072],"/lt/17/lib/tzdb.dat":[0,131072],"/lt/etc/localtime":[],"/lt/17/conf/accessibility.properties":[],"/lt/etc/timezone":[]}*/
     })
 ]).then(() => {
-    showStatus('Camera ready! Click "Capture Photo" to take a picture.', 'info');
+    status.update('Camera ready! Click "Capture Photo" to take a picture.', 'info', 10000);
     shutter.disabled = false;
 }).catch((error) => {
-    showStatus(error.message, 'error');
+    status.update(error.message, 'error');
 });
-
-// Show status message
-function showStatus(message, type) {
-    status.textContent = message;
-    status.className = 'status ' + type;
-}
 
 // Capture photo and process
 shutter.addEventListener('click', async () => {
@@ -288,7 +338,7 @@ shutter.addEventListener('click', async () => {
         video.style.display = 'none';
         preview.style.display = 'block';
 
-        showStatus('Photo captured! Creating PDF...', 'info');
+        status.update('Photo captured! Creating PDF...', 'info');
         loader.style.display = 'block';
 
         // Convert to PDF
@@ -320,21 +370,21 @@ shutter.addEventListener('click', async () => {
         pdf.text(text, 15, canvas.height - 12);
         const pdfBlob = pdf.output('blob');
 
-        showStatus('Photo created! Adding timestamp signature...', 'info');
+        status.update('Photo created! Adding timestamp signature...', 'info');
 
         // Timestamp the PDF
         await timestampPDF(pdfBlob);
         //await (new Promise((resolve, reject) => { setTimeout(resolve, 3000); })); // for Layout
 
     } catch (err) {
-        showStatus('Error: ' + err.message, 'error');
+        status.update('Error: ' + err.message, 'error');
         console.error('Processing error:', err);
     } finally {
         shutter.disabled = false;
         video.style.display = 'block';
         preview.style.display = 'none';
         loader.style.display = 'none';
-        showStatus('Timestamped PDF created!', 'info');
+        status.update('✅ Timestamped PDF created!', 'info', 10000);
     }
 });
 
@@ -351,7 +401,7 @@ async function timestampPDF(pdfBlob) {
 
         const blob = new Blob([await cjFileBlob(outputfile)], { type: "application/octet-stream" });
         downloadFile(blob, 'timestamped-photo-' + Date.now() + '.pdf');
-        showStatus('✅ PDF timestamped and downloaded successfully!', 'success');
+        //status.update('✅ PDF timestamped and downloaded successfully!', 'success');
     } catch (err) {
         throw new Error('Timestamp failed: ' + err.message);
     }
