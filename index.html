@@ -152,6 +152,19 @@
       padding-bottom: env(safe-area-inset-bottom); /* iPhoneのホームバー対策 */
     }
 
+    .geolocator {
+      min-width: 24px;
+      padding: 15px 15px;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      background: rgba(0, 0, 0, 0.3);
+    }
+    .geolocator.enabled {
+      background: rgba(52, 199, 89, 0.7);
+    }
     /* 5. シャッターボタン */
     .shutter-button {
       min-width: 120px;
@@ -224,6 +237,7 @@
       <div class="status" id="status">Create PDF with LTV enabled timestamp signature</div>
     </div>
     <div class="controls">
+      <button class="geolocator" id="geolocator" title="Add GPS Data">📍</button>
       <button class="shutter-button" id="shutter">📷 Capture Photo</button>
       <div class="footer">
         <a href="https://github.com/330k/phototimestamp">GitHub</a>, Powered by: <a href="https://github.com/parallax/jsPDF" target="_blank">jsPDF</a>, <a href="https://cheerpj.com/" target="_blank">CheerpJ</a>, <a href="https://github.com/akr/pdftimestamp" target="_blank">pdftimestamp</a>
@@ -234,10 +248,12 @@
   <script>
 const video = document.getElementById('video');
 const canvas = document.getElementById('canvas');
+const geolocator = document.getElementById('geolocator');
 const shutter = document.getElementById('shutter');
 const loader = document.getElementById('loader');
 const preview = document.getElementById('preview');
 const ctx = canvas.getContext('2d');
+let geoId = null;
 let geolocation = null;
 
 /**
@@ -356,11 +372,23 @@ Promise.all([
 }).catch((error) => {
     status.update(error.message, 'error');
 });
-if(navigator.geolocation){
-  navigator.geolocation.watchPosition((position) => {
-    geolocation = position;
-  });
-}
+
+// Enable/Disable geolocation
+geolocator.addEventListener('click', () => {
+    if(geoId){
+        navigator.geolocation.clearWatch(geoId);
+        geoId = null;
+        geolocation = null;
+        geolocator.className = 'geolocator';
+    }else{
+        if(navigator.geolocation){
+            geoId = navigator.geolocation.watchPosition((position) => {
+                geolocation = position;
+            });
+            geolocator.className = 'geolocator enabled';
+        }
+    }
+})
 
 // Capture photo and process
 shutter.addEventListener('click', async () => {
