@@ -10,6 +10,17 @@ While AI is reducing the evidential value of photos, the concept is to create ev
 
 To enhance evidential value, embedding additional information such as the browser details and location data from the time of capture could also be considered.
 
+## How to verify PDF
+
+Adobe Acrobat
+
+![image](adobe001.png)
+
+Edge
+
+![image](edge001.png)
+![image](edge002.png)
+
 ## References
 
 * [pdftimestamp](https://github.com/akr/pdftimestamp)
