@@ -298,6 +298,39 @@ class TooltipManager {
     }
 }
 
+/**
+ * 位置情報取得の有効/無効状態を管理するクラス
+ */
+class GeolocationManager {
+    constructor(){
+        this.watchId = null;
+        this.geolocation = null;
+    }
+    enable(){
+        if(navigator.geolocation){
+            this.watchId = navigator.geolocation.watchPosition((position) => {
+                this.geolocation = position;
+            });
+            return true;
+        }else{
+            return false;
+        }
+    }
+    disable(){
+        if(this.watchId){
+            navigator.geolocation.clearWatch(geoId);
+        }
+        this.watchId = null;
+        this.geolocation = null;
+    }
+    isEnabled(){
+        return (this.geolocation !== null);
+    }
+    getGeolocation(){
+        return this.geolocation;
+    }
+}
+
 // Initialize camera
 async function initCamera() {
     try {
@@ -358,6 +391,7 @@ function createXmpMetadata(position){
 }
 
 const status = new TooltipManager('status');
+const geoloc = new GeolocationManager();
 shutter.disabled = true;
 Promise.all([
     initCamera(),
@@ -375,16 +409,11 @@ Promise.all([
 
 // Enable/Disable geolocation
 geolocator.addEventListener('click', () => {
-    if(geoId){
-        navigator.geolocation.clearWatch(geoId);
-        geoId = null;
-        geolocation = null;
+    if(geoloc.isEnabled()){
+        geoloc.disable();
         geolocator.className = 'geolocator';
     }else{
-        if(navigator.geolocation){
-            geoId = navigator.geolocation.watchPosition((position) => {
-                geolocation = position;
-            });
+        if(geoloc.enable()){
             geolocator.className = 'geolocator enabled';
         }
     }
@@ -436,8 +465,8 @@ shutter.addEventListener('click', async () => {
             creator: 'Timestamped Photo ' + location.href + ' by 330k',
             creationDate: timestamp
         });
-        if(geolocation){
-          pdf.addMetadata(createXmpMetadata(geolocation));
+        if(geoloc.isEnabled()){
+            pdf.addMetadata(createXmpMetadata(geoloc.getGeolocation()));
         }
 
         // Add visible timestamp on the PDF
