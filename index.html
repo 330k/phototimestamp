@@ -238,6 +238,7 @@ const shutter = document.getElementById('shutter');
 const loader = document.getElementById('loader');
 const preview = document.getElementById('preview');
 const ctx = canvas.getContext('2d');
+let geolocation = null;
 
 /**
  * ツールチップの表示・更新・自動消去を管理するクラス
@@ -299,6 +300,47 @@ async function initCamera() {
     }
 }
 
+// Exif用の緯度経度フォーマット文字列を作成
+function formatCoordinate(decimal) {
+    const abs = Math.abs(decimal);
+    const degrees = Math.floor(abs);
+    const minutes = ((abs - degrees) * 60).toFixed(2);
+    return `${degrees},${minutes}`;
+    //return abs;
+}
+// GPS即位結果からPDFに埋め込むExifデータを作成
+function createXmpMetadata(position){
+    const latval = formatCoordinate(position.coords.latitude) + ((position.coords.latitude > 0) ? 'N' : 'S');
+    const lonval = formatCoordinate(position.coords.longitude) + ((position.coords.longitude > 0) ? 'E' : 'W');
+    const altref = '0';
+    const altval = (position.coords?.altitude || '0') + '/1';
+    const speedref = 'K';
+    const speedval = (position.coords?.speed || '0') + '/1';
+    const accuracyval = (position.coords?.accuracy || '0') + '/1';
+    const d = new Date(position.timestamp);
+    const timestampval = d.toISOString();
+
+    const xmpMetadata = `<?xpacket begin="" id="W5M0MpCehiHzreSzNTczkc9d"?>
+<x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="Adobe XMP Core 5.6">
+ <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+  <rdf:Description rdf:about=""
+    xmlns:exif="http://ns.adobe.com/exif/1.0/">
+   <exif:GPSLatitude>${latval}</exif:GPSLatitude>
+   <exif:GPSLongitude>${lonval}</exif:GPSLongitude>
+   <exif:GPSAltitudeRef>${altref}</exif:GPSAltitudeRef>
+   <exif:GPSAltitude>${altval}</exif:GPSAltitude>
+   <exif:GPSSpeedRef>${speedref}</exif:GPSSpeedRef>
+   <exif:GPSSpeed>${speedval}</exif:GPSSpeed>
+   <exif:GPSTimeStamp>${timestampval}</exif:GPSTimeStamp>
+   <exif:GPSHPositioningError>${accuracyval}</exif:GPSHPositioningError>
+  </rdf:Description>
+ </rdf:RDF>
+</x:xmpmeta>
+<?xpacket end="w"?>`;
+
+    return xmpMetadata;
+}
+
 const status = new TooltipManager('status');
 shutter.disabled = true;
 Promise.all([
@@ -314,6 +356,11 @@ Promise.all([
 }).catch((error) => {
     status.update(error.message, 'error');
 });
+if(navigator.geolocation){
+  navigator.geolocation.watchPosition((position) => {
+    geolocation = position;
+  });
+}
 
 // Capture photo and process
 shutter.addEventListener('click', async () => {
@@ -353,14 +400,17 @@ shutter.addEventListener('click', async () => {
 
         pdf.addImage(imageDataUrl, 'JPEG', 0, 0, canvas.width, canvas.height);
         const timestamp = now.toISOString();
-        pdf.setProperties({
+        pdf.setDocumentProperties({
             title: 'Timestamped Photo',
-            subject: 'Taken: ' + now.toISOString(),
+            subject: 'ISODateTime: ' + now.toISOString(),
             author: 'UserAgent: ' + navigator.userAgent,
-            keywords: '' ,
+            keywords: 'PDF, timestamp, digital signature, LTV' ,
             creator: 'Timestamped Photo ' + location.href + ' by 330k',
             creationDate: timestamp
         });
+        if(geolocation){
+          pdf.addMetadata(createXmpMetadata(geolocation));
+        }
 
         // Add visible timestamp on the PDF
         pdf.setFontSize(10);
