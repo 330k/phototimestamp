@@ -459,7 +459,8 @@ shutter.addEventListener('click', async () => {
         const pdf = new jsPDF({
             orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
             unit: 'px',
-            format: [canvas.width, canvas.height]
+            format: [canvas.width, canvas.height],
+            putOnlyUsedFonts: true
         });
 
         pdf.addImage(imageDataUrl, 'JPEG', 0, 0, canvas.width, canvas.height);
