@@ -490,7 +490,8 @@ shutter.addEventListener('click', async () => {
         status.update('Please wait. Adding timestamp signature...', 'info');
 
         // Timestamp the PDF
-        await timestampPDF(pdfBlob);
+        const timestampedPdfBlob = await timestampPDF(pdfBlob);
+        downloadFile(timestampedPdfBlob, 'timestamped-photo-' + now.getTime() + '.pdf');
         //await (new Promise((resolve, reject) => { setTimeout(resolve, 3000); })); // for Layout
 
     } catch (err) {
@@ -517,8 +518,7 @@ async function timestampPDF(pdfBlob) {
         await cheerpjRunJar("/app" + (new URL('./', location.href)).pathname + "pdftimestamp-all.jar", "http://ts.ssl.com", "/str/input.pdf", outputfile);
 
         const blob = new Blob([await cjFileBlob(outputfile)], { type: "application/octet-stream" });
-        downloadFile(blob, 'timestamped-photo-' + Date.now() + '.pdf');
-        //status.update('✅ PDF timestamped and downloaded successfully!', 'success');
+        return blob;
     } catch (err) {
         throw new Error('Timestamp failed: ' + err.message);
     }
