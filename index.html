@@ -439,7 +439,8 @@ shutter.addEventListener('click', async () => {
         // Add Timestamp
         //ctx.fillStyle = "rgb(0 0 0 / 80%)";
         ctx.fillStyle = "rgb(255 165 0 / 80%)";
-        ctx.font = "bold 24px monospace";
+        const fontSize = Math.floor(canvas.width * 0.02);
+        ctx.font = `bold ${fontSize}px monospace`;
         ctx.textBaseline = "top";
         ctx.textAlign = "right";
         ctx.fillText(now.toISOString(), canvas.width, 0);
@@ -476,16 +477,16 @@ shutter.addEventListener('click', async () => {
         }
 
         // Add visible timestamp on the PDF
-        pdf.setFontSize(10);
+        /*pdf.setFontSize(10);
         pdf.setTextColor(255, 255, 255);
         pdf.setFillColor(0, 0, 0, 0.7);
         const text = `Timestamp: ${now.toISOString()}`;
         const textWidth = pdf.getTextWidth(text);
         pdf.rect(10, canvas.height - 25, textWidth + 10, 20, 'F');
-        pdf.text(text, 15, canvas.height - 12);
-        const pdfBlob = pdf.output('blob');
+        pdf.text(text, 15, canvas.height - 12);*/
 
-        status.update('Photo created! Adding timestamp signature...', 'info');
+        const pdfBlob = pdf.output('blob');
+        status.update('Please wait. Adding timestamp signature...', 'info');
 
         // Timestamp the PDF
         await timestampPDF(pdfBlob);
