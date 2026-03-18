@@ -446,7 +446,10 @@ shutter.addEventListener('click', async () => {
         ctx.fillText(now.toISOString(), canvas.width, 0);
 
         // Show preview
-        const imageDataUrl = canvas.toDataURL('image/jpeg', 0.95);
+        const imageBlob = await new Promise((resolve, reject) => {
+          canvas.toBlob((blob) => {resolve(blob);}, 'image/jpeg', 0.95);
+        });
+        const imageDataUrl = URL.createObjectURL(imageBlob);
         preview.src = imageDataUrl;
         video.style.display = 'none';
         preview.style.display = 'block';
@@ -493,6 +496,8 @@ shutter.addEventListener('click', async () => {
         const timestampedPdfBlob = await timestampPDF(pdfBlob);
         downloadFile(timestampedPdfBlob, 'timestamped-photo-' + now.getTime() + '.pdf');
         //await (new Promise((resolve, reject) => { setTimeout(resolve, 3000); })); // for Layout
+
+        URL.revokeObjectURL(imageDataUrl);
 
     } catch (err) {
         status.update('Error: ' + err.message, 'error');
