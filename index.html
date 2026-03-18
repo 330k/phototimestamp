@@ -447,7 +447,7 @@ shutter.addEventListener('click', async () => {
 
         // Show preview
         const imageBlob = await new Promise((resolve, reject) => {
-          canvas.toBlob((blob) => {resolve(blob);}, 'image/jpeg', 0.95);
+            canvas.toBlob((blob) => {resolve(blob);}, 'image/jpeg', 0.95);
         });
         const imageDataUrl = URL.createObjectURL(imageBlob);
         preview.src = imageDataUrl;
@@ -476,6 +476,7 @@ shutter.addEventListener('click', async () => {
             creator: 'Timestamped Photo ' + location.href + ' by 330k',
             creationDate: timestamp
         });
+        pdf.setDisplayMode('fullpage');
         if(geoloc.isEnabled()){
             pdf.addMetadata(createXmpMetadata(geoloc.getGeolocation()));
         }
@@ -497,8 +498,6 @@ shutter.addEventListener('click', async () => {
         downloadFile(timestampedPdfBlob, 'timestamped-photo-' + now.getTime() + '.pdf');
         //await (new Promise((resolve, reject) => { setTimeout(resolve, 3000); })); // for Layout
 
-        URL.revokeObjectURL(imageDataUrl);
-
     } catch (err) {
         status.update('Error: ' + err.message, 'error');
         console.error('Processing error:', err);
@@ -506,6 +505,10 @@ shutter.addEventListener('click', async () => {
         shutter.disabled = false;
         video.style.display = 'block';
         preview.style.display = 'none';
+        if(preview.src){
+            URL.revokeObjectURL(preview.src);
+        }
+        preview.removeAttribute('src');
         loader.style.display = 'none';
         status.update('✅ Timestamped PDF created!', 'info', 10000);
     }
