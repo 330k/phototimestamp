@@ -222,6 +222,18 @@
       0% { transform: translate(-50%, -50%) rotate(0deg); }
       100% { transform: translate(-50%, -50%) rotate(360deg); }
     }
+
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
   </style>
 </head>
 <body>
@@ -236,6 +248,13 @@
       <img id="preview" class="preview-image" alt="Captured photo">
       <div class="loader" id="loader"></div>
       <div class="status" id="status">Create PDF with LTV enabled timestamp signature</div>
+      <div class="visually-hidden">
+An experimental program that launches the camera in the browser and adds an LTV enabled timestamp signature to the PDF.
+
+While AI is reducing the evidential value of photos, the concept is to create evidential photos by generating timestamp-signed PDFs directly within the browser.
+
+To enhance evidential value, additional information such as UserAgent and Geolocation API is also embedded.
+      </div>
     </div>
     <div class="controls">
       <button class="geolocator" id="geolocator" title="Add GPS Data">📍</button>
